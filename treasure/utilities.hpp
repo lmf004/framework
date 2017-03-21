@@ -4,6 +4,7 @@
 void loghex(const std::string title, const unsigned char* p, int len = 0);
 void loghex(const std::string title, const char* p, int len = 0);
 
+
 std::string string_format(const char* format, ...);
 //void print(const char* format, ...);
 extern bool g_last_is_dot;
@@ -15,6 +16,21 @@ extern bool g_last_is_dot;
     g_last_is_dot = false;						\
   } while(0)								\
     /**/
+
+typedef std::lock_guard<std::mutex> lock_guard;
+typedef std::unique_lock<std::mutex> unique_lock;
+
+#define msleep(x)							\
+  do {									\
+    std::this_thread::sleep_for(std::chrono::milliseconds((x)));	\
+  } while(0)								\
+    /**/
+
+#define std_lock(m1, m2)			\
+  std::lock(m1, m2);				\
+  lock_guard lock1(m1, std::adopt_lock);	\
+  lock_guard lock2(m2, std::adopt_lock);	\
+  /**/
 
 //--------------------------------------------------------------------------------
 
@@ -257,5 +273,74 @@ void notify(std::string evt, int seq, shared_ptr<raw_buf> data = shared_ptr<raw_
 
 std::string get_localhost_ip();
 std::vector<std::string> get_localhost_iplist();
-  
+
+//---------------------------------------------------------------------------------
+struct MinusTemp
+{
+  MinusTemp(std::atomic<int> & count, int n = 1)
+    : _count(count), _n(n), _commit(false)
+  { this->_count -= _n; }
+  ~MinusTemp() {
+    if(!_commit) this->_count += _n;
+  }
+  void commit() { _commit = true; }
+  std::atomic<int> & _count;
+  int _n;
+  bool _commit;
+};
+
+struct PlusTemp
+{
+  PlusTemp(std::atomic<int> & count, int n = 1)
+    : _count(count), _n(n), _commit(false)
+  { this->_count += _n; }
+  ~PlusTemp() {
+    if(!_commit) this->_count -= _n;
+  }
+  void commit() { _commit = true; }
+  std::atomic<int> & _count;
+  int _n;
+  bool _commit;
+};
+
+struct timer
+{
+  typedef std::vector<std::pair<std::string, double> > times_type;
+  typedef decltype(chrono::system_clock::now()) now_type ;
+  timer(std::string name, times_type & v, bool delay = false)
+    : name(name), v(v) {
+    if(!delay) do_start();
+  }
+  ~timer() {
+    if(started && !stoped) do_stop();
+  }
+  void start() {
+    do_start();
+  }
+  void stop() {
+    if(started) {
+      do_stop();
+      stoped = true;
+    }
+  }
+private:
+  void do_start() {
+    begin = chrono::system_clock::now();
+    started = true;
+  }
+  void do_stop() {
+    auto end = chrono::system_clock::now();
+    double seconds = double(chrono::duration_cast<chrono::microseconds>(end-begin).count())/(1000*1000);
+    v.push_back(std::pair<std::string, double>(name, seconds));
+    stoped = true;
+  }
+  std::string name;
+  now_type begin;
+  bool started{false};
+  bool stoped{false};
+  times_type & v;
+};
+
+//---------------------------------------------------------------------------------
+
 #endif

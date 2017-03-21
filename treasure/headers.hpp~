@@ -39,7 +39,8 @@
 #include <memory>
 #include <thread>
 #include <future>
-
+#include <condition_variable>
+		
 #include <glib.h>
 #include <gtk/gtk.h>
 
@@ -154,7 +155,7 @@ using std::make_shared;
 #include "utilities.hpp"
 #include "memory_leak.hpp"
 #include "rawbuf.hpp"
-#include "thread.hpp" 
+#include "thread.hpp"
 #include "socket_helper.hpp"
 #include "queue.hpp"
 #include "object_pool.hpp"
@@ -162,6 +163,7 @@ using std::make_shared;
 #include "serializer.hpp"
 #include "loop.hpp"
 #include "task.hpp"
+#include "threadpool.hpp"
 
 // #include "socket.hpp"
 

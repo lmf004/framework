@@ -203,6 +203,102 @@ private:
   GAsyncQueue *_queue;
 };
 
+template<typename T>
+struct QueueThreadSafe
+{
+  void push(T const & t) {
+    unique_lock lk(_mtx);
+    _queue.emplace_back(t);
+    lk.unlock();
+    _cv.notify_one();
+    _length++;
+  }
+
+  void push_unlocked(T const & t) {
+    _queue.emplace_back(t);
+    _length++;
+  }
+  
+  T pop() {
+    _length--;
+    unique_lock lk(_mtx);
+    _cv.wait(lk, [this]{ return !_queue.empty(); } );
+    auto a = _queue.front();
+    _queue.pop_front();
+    return a;
+  }
+
+  T pop_unlocked() {
+    _length--;
+    while(_queue.empty())
+      msleep(10);
+    auto a = _queue.front();
+    _queue.pop_front();
+    return a;
+  }
+  
+  boost::optional<T>
+  try_pop() {
+    MinusTemp tmp(_length);
+    unique_lock lk(_mtx);
+    if(_queue.empty())
+      return boost::optional<T>();
+    tmp.commit();
+    auto a = _queue.front();
+    _queue.pop_front();
+    return boost::optional<T>(a);
+  }
+
+  boost::optional<T>
+  try_pop_unlocked() {
+    MinusTemp tmp(_length);
+    if(_queue.empty())
+      return boost::optional<T>();
+    tmp.commit();
+    auto a = _queue.front();
+    _queue.pop_front();
+    return boost::optional<T>(a);
+  }
+
+  boost::optional<T>
+  timed_pop(int t) {
+    MinusTemp tmp(_length);
+    unique_lock lk(_mtx);
+    if(!_cv.wait_for(lk, std::chrono::milliseconds(t), [this]{ return !_queue.empty(); } ) )
+      return boost::optional<T>();
+    tmp.commit();
+    auto a = _queue.front();
+    _queue.pop_front();
+    return boost::optional<T>(a);
+  }  
+
+  boost::optional<T>
+  timed_pop_unlocked(int t) {
+    MinusTemp tmp(_length);
+    t /= 10;
+    while(_queue.empty()) { 
+      msleep(10);
+      if(--t <= 0) break; 
+    }
+    if(_queue.empty())
+      return boost::optional<T>();
+    tmp.commit();
+    auto a = _queue.front();
+    _queue.pop_front();
+    return boost::optional<T>(a);
+  }  
+  
+  int length() const { return _length; }
+  
+  unique_lock lock() { return unique_lock(_mtx); }
+  
+private:
+  std::deque<T> _queue;
+  std::mutex    _mtx;
+  std::condition_variable _cv;
+  std::atomic<int> _length{0};
+};
+
 // int main()
 // {
 //   async_queue<empty_object> q;
@@ -260,63 +356,5 @@ private:
 };
 
 ************************************************************************************************************************/
-
-//-------------------------------------------------------------------------------
-
-// template<typename T>
-// class threadsafe_queue
-// {
-// private:
-//   mutable std::mutex mut;
-//   std::queue<:shared_ptr> > data_queue;//队里存储的是shared_ptr这样可以保证push和pop操作时不会引起构造或析构异常，队列更加高效
-//   std::condition_variable data_cond;//采用条件变量同步入队和出队操作
-// public:
-//   threadsafe_queue(){}
-//   void wait_and_pop(T& value)//直至容器中有元素可以删除
-//   {
-//     std::unique_lock<:mutex> lk(mut);
-//     data_cond.wait(lk,[this]{return !data_queue.empty();});
-//     value=std::move(*data_queue.front()); 
-//     data_queue.pop();
-//   }
-//   bool try_pop(T& value)//若队中无元素可以删除则直接返回false
-//   {
-//     std::lock_guard<:mutex> lk(mut);
-//     if(data_queue.empty())
-//       return false;
-//     value=std::move(*data_queue.front()); 
-//     data_queue.pop();
-//     return true;
-//   }
-//   std::shared_ptr wait_and_pop()
-//   {
-//     std::unique_lock<:mutex> lk(mut);
-//     data_cond.wait(lk,[this]{return !data_queue.empty();});
-//     std::shared_ptr res=data_queue.front(); 
-//     data_queue.pop();
-//     return res;
-//   }
-//   std::shared_ptr try_pop()
-//   {
-//     std::lock_guard<:mutex> lk(mut);
-//     if(data_queue.empty())
-//       return std::shared_ptr();
-//     std::shared_ptr res=data_queue.front(); 
-//     data_queue.pop();
-//     return res;
-//   }
-//   void push(T new_value)
-//   {
-//     std::shared_ptr data(std::make_shared(std::move(new_value)));//数据的构造在临界区外从而缩小临界区，并且不会在临界区抛出异常
-//     std::lock_guard<:mutex> lk(mut);
-//     data_queue.push(data);
-//     data_cond.notify_one();
-//   }
-//   bool empty() const
-//   {
-//     std::lock_guard<:mutex> lk(mut);
-//     return data_queue.empty();
-//   }
-// };
 
 #endif
