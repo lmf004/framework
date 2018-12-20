@@ -1,4 +1,21 @@
-#include "headers.hpp"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/param.h> 
+#include <time.h>
+#include <sys/time.h>
+#include <iconv.h>
+#include <ctype.h>
+
+#include <glib.h>
+#include <gtk/gtk.h>
+
 #include "socket_helper.hpp"
 
 int SocketHelper::send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)

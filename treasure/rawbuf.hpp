@@ -2,7 +2,7 @@
 #define __RAW_BUF_HPP__
 
 
-struct raw_buf : private boost::noncopyable
+struct raw_buf 
 {
   raw_buf() 
   { 
@@ -60,6 +60,7 @@ struct raw_buf : private boost::noncopyable
   char* data() { return _data; }
   int size() { return _len; }
 private:
+  raw_buf(const raw_buf & rhs);
   char * _data;
   int _len;
 };
