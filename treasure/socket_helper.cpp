@@ -1,7 +1,7 @@
 #include "headers.hpp"
 #include "socket_helper.hpp"
 
-int Socket_Helper::send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
+int SocketHelper::send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
 {
   if(shutdown) *shutdown = FALSE;
   int left = buflen;
@@ -21,11 +21,11 @@ int Socket_Helper::send_buffer(int sock, unsigned char* buffer, int buflen, gboo
   return total;
 }
 
-bool Socket_Helper::recv_msg(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
+bool SocketHelper::recv_msg(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
 {
   int total = 0;
 
-  int cnt = Socket_Helper::recv_buffer(sock, buffer, 2, shutdown);
+  int cnt = SocketHelper::recv_buffer(sock, buffer, 2, shutdown);
   if(cnt <=0) return false;
 
   total += cnt;
@@ -46,7 +46,7 @@ bool Socket_Helper::recv_msg(int sock, unsigned char* buffer, int buflen, gboole
       return false;
     }
 
-  cnt = Socket_Helper::recv_buffer(sock, buffer+2, *(unsigned short*)buffer - 2, shutdown);
+  cnt = SocketHelper::recv_buffer(sock, buffer+2, *(unsigned short*)buffer - 2, shutdown);
 
   if(cnt <=0) return false;
 
@@ -55,7 +55,7 @@ bool Socket_Helper::recv_msg(int sock, unsigned char* buffer, int buflen, gboole
   return total == *(unsigned short*)buffer;
 }
 
-int Socket_Helper::recv_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
+int SocketHelper::recv_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
 {
   if(shutdown) *shutdown = FALSE;
   int left = buflen;
@@ -76,7 +76,7 @@ int Socket_Helper::recv_buffer(int sock, unsigned char* buffer, int buflen, gboo
   return total;
 }
 
-void Socket_Helper::set_non_blocking(int sock)
+void SocketHelper::set_non_blocking(int sock)
 {
   g_return_if_fail(sock > 0);
 
@@ -121,7 +121,7 @@ int getpeermac(int sockfd, char *buf){
   return ret; 
 } 
 
-int Socket_Helper::accept(int sock)
+int SocketHelper::accept(int sock)
 {
   struct sockaddr_in clientaddr;
   socklen_t length = sizeof(clientaddr);
@@ -145,7 +145,7 @@ int Socket_Helper::accept(int sock)
   return connfd;
 }
 
-int Socket_Helper::listen(int port)
+int SocketHelper::listen(int port)
 {
   int listenfd = 0;
   struct sockaddr_in server_addr;
@@ -186,7 +186,7 @@ int Socket_Helper::listen(int port)
   return 0;
 }
 
-int Socket_Helper::connect(const char * serverip, const int serverport)
+int SocketHelper::connect(const char * serverip, const int serverport)
 {
   int sock = 0;
   struct sockaddr_in servaddr,cliaddr;
@@ -216,7 +216,7 @@ int Socket_Helper::connect(const char * serverip, const int serverport)
   return sock;
 }
 
-int Socket_Helper::epoll_create(int sock, struct epoll_event** epoll_events, int client_cnt)
+int SocketHelper::epoll_create(int sock, struct epoll_event** epoll_events, int client_cnt)
 {
   struct epoll_event ev;
   struct epoll_event * events = (struct epoll_event *)g_malloc0((client_cnt+1) * sizeof(struct epoll_event));
@@ -245,7 +245,7 @@ int Socket_Helper::epoll_create(int sock, struct epoll_event** epoll_events, int
   return epfd;
 }
 
-int Socket_Helper::epoll_wait(int epfd, struct epoll_event* events, int client_cnt)
+int SocketHelper::epoll_wait(int epfd, struct epoll_event* events, int client_cnt)
 {
   int nfds= ::epoll_wait(epfd, events, client_cnt+1, 1000);
   if(nfds < 0)
@@ -255,7 +255,7 @@ int Socket_Helper::epoll_wait(int epfd, struct epoll_event* events, int client_c
   return nfds;
 }
 
-void Socket_Helper::epoll_add(int epfd, int connfd, void* ptr)
+void SocketHelper::epoll_add(int epfd, int connfd, void* ptr)
 {
   struct epoll_event ev;
 
@@ -272,7 +272,7 @@ void Socket_Helper::epoll_add(int epfd, int connfd, void* ptr)
 }
 
 
-void Socket_Helper::epoll_loop(int port, int client_cnt, int& sock,
+void SocketHelper::epoll_loop(int port, int client_cnt, int& sock,
                                std::function<void*(int)> accept_handler, 
 			       std::function<void(void*, std::shared_ptr<raw_buf>, bool)> recv_handler,
 			       std::function<int(void*)> get_fd_handler,
@@ -282,25 +282,25 @@ void Socket_Helper::epoll_loop(int port, int client_cnt, int& sock,
 {
   scope();
   struct epoll_event * events = NULL;
-  sock = Socket_Helper::listen(port);
-  Socket_Helper::set_non_blocking(sock);
-  int epfd = Socket_Helper::epoll_create(sock, &events, client_cnt);
+  sock = SocketHelper::listen(port);
+  SocketHelper::set_non_blocking(sock);
+  int epfd = SocketHelper::epoll_create(sock, &events, client_cnt);
   g_print("epoll_loop is ready for epoll_wait\n");
   while(*running) {
-    int nfds =  Socket_Helper::epoll_wait(epfd, events, client_cnt);
+    int nfds =  SocketHelper::epoll_wait(epfd, events, client_cnt);
     for(int i=0; i<nfds; ++i) {
       if(sock == events[i].data.fd) {
-	int connfd = Socket_Helper::accept(sock);
+	int connfd = SocketHelper::accept(sock);
 	if(connfd > 0) {
-	  Socket_Helper::set_non_blocking(connfd);
+	  SocketHelper::set_non_blocking(connfd);
 	  void * p = accept_handler(connfd);
-	  Socket_Helper::epoll_add(epfd, connfd, p);
+	  SocketHelper::epoll_add(epfd, connfd, p);
 	}
       } else {
 	void* p = events[i].data.ptr;
 	int connfd = get_fd_handler(p);
 	auto buf = std::make_shared<raw_buf>();
-	bool succ = Socket_Helper::recv_msg(connfd, (unsigned char*)buf->data(), buf->size(), NULL);
+	bool succ = SocketHelper::recv_msg(connfd, (unsigned char*)buf->data(), buf->size(), NULL);
 	if(!succ) { 
 	  ::epoll_ctl(epfd, EPOLL_CTL_DEL, connfd, 0); ::close(connfd); 
 	  del_handler(p);

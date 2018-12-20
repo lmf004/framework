@@ -6,7 +6,7 @@
 // typedef gpointer (*pfn_accept_handler)(int connfd, gpointer);
 // typedef void (*pfn_recv_handler)(int connfd, gpointer ptr, guint8* buffer, bool succ, gpointer);
 
-struct Socket_Helper
+struct SocketHelper
 {
   static int  send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown);
   static int  recv_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown);

@@ -9,7 +9,7 @@ struct EpollClient
     if(_fd <= 0) { g_print("e1"); return 1; }
     std::lock_guard<std::mutex> lock(_send_mtx);
     auto p = buf->data();
-    int cnt = Socket_Helper::send_buffer(_fd, (unsigned char*)p, *(unsigned short*)p, NULL);
+    int cnt = SocketHelper::send_buffer(_fd, (unsigned char*)p, *(unsigned short*)p, NULL);
     if(cnt != *(unsigned short*)p) g_warning("send_msg failed");
     return cnt == *(unsigned short*)p ? 0 : 1;
   }
@@ -59,7 +59,7 @@ struct Server : Thread< Server<Client> >
       DEL; delete (shared_ptr<Client>*)p;
     };
     
-    Socket_Helper::epoll_loop(_port, 10000, _sock, accept_hdr, recv_hdr, fd_hdr, del_hdr, running);
+    SocketHelper::epoll_loop(_port, 10000, _sock, accept_hdr, recv_hdr, fd_hdr, del_hdr, running);
   }    
 private:
   int _sock;
@@ -75,12 +75,12 @@ struct Client : Thread< Client<Derived> >
     g_print("Client::run...\n");
   START:
     _fd = 0;
-    while(*running && (_fd = Socket_Helper::connect(_ip.c_str(), _port)) <= 0)
+    while(*running && (_fd = SocketHelper::connect(_ip.c_str(), _port)) <= 0)
       std::this_thread::sleep_for(std::chrono::seconds(1));
     if(_fd > 0) d->notify(EVT_CONNECTED);
     while(*running) {
       auto buf = std::make_shared<raw_buf>();
-      if(Socket_Helper::recv_msg(_fd, (unsigned char*)buf->data(), buf->size(), NULL)){
+      if(SocketHelper::recv_msg(_fd, (unsigned char*)buf->data(), buf->size(), NULL)){
 	int ret = d->handle_received_message(buf);
 	if(ret == EVT_JOB_DONE) { close(); return; }
       }
@@ -93,7 +93,7 @@ struct Client : Thread< Client<Derived> >
     if(_fd <= 0) { g_print("e1"); return 1; }
     std::lock_guard<std::mutex> lock(_send_mtx);
     auto p = buf->data();
-    int cnt = Socket_Helper::send_buffer(_fd, (unsigned char*)p, *(unsigned short*)p, NULL);
+    int cnt = SocketHelper::send_buffer(_fd, (unsigned char*)p, *(unsigned short*)p, NULL);
     if(cnt != *(unsigned short*)p) g_warning("send_msg failed");
     return cnt == *(unsigned short*)p ? 0 : 1;
   }
