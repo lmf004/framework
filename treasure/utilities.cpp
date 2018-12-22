@@ -116,16 +116,16 @@ int tick() { return Tick::instance()->tick(); }
 
 //----------------------------------------------------------------------------------------------------
 
-void string_to_arithmetic(std::string str, char & n){ n = (char)std::stoi(str); }
-void string_to_arithmetic(std::string str, unsigned char & n){ n = (unsigned char)std::stoi(str); }
-void string_to_arithmetic(std::string str, short & n){ n = (short)std::stoi(str); }
-void string_to_arithmetic(std::string str, unsigned short & n){ n = (unsigned short)std::stoi(str); }
-void string_to_arithmetic(std::string str, int & n){ n = (int)std::stoi(str); }
-void string_to_arithmetic(std::string str, unsigned int & n){ n = (unsigned int)std::stoi(str); }
-void string_to_arithmetic(std::string str, long & n){ n = std::stol(str); }
-void string_to_arithmetic(std::string str, unsigned long & n){ n = std::stoul(str); }
-void string_to_arithmetic(std::string str, long long & n){ n = std::stoll(str); }
-void string_to_arithmetic(std::string str, unsigned long long & n){ n = std::stoull(str); }
+void string_to_arithmetic(std::string str, char & n)               { n = (char)std::stoi(str); }
+void string_to_arithmetic(std::string str, unsigned char & n)      { n = (unsigned char)std::stoi(str); }
+void string_to_arithmetic(std::string str, short & n)              { n = (short)std::stoi(str); }
+void string_to_arithmetic(std::string str, unsigned short & n)     { n = (unsigned short)std::stoi(str); }
+void string_to_arithmetic(std::string str, int & n)                { n = (int)std::stoi(str); }
+void string_to_arithmetic(std::string str, unsigned int & n)       { n = (unsigned int)std::stoi(str); }
+void string_to_arithmetic(std::string str, long & n)               { n = std::stol(str); }
+void string_to_arithmetic(std::string str, unsigned long & n)      { n = std::stoul(str); }
+void string_to_arithmetic(std::string str, long long & n)          { n = std::stoll(str); }
+void string_to_arithmetic(std::string str, unsigned long long & n) { n = std::stoull(str); }
 
 //----------------------------------------------------------------------------------------------------
 
