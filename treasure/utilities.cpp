@@ -14,6 +14,7 @@ struct CharsDict{
   static std::vector<char> s_chars;
   static bool inited;
 };
+
 std::vector<std::string> CharsDict::s_hex;
 std::vector<char> CharsDict::s_chars;
 bool CharsDict::inited = false;
@@ -111,8 +112,8 @@ std::string date_2_week(std::string date)
 }
 
 //-------------------------------------------------------------------------------
-int tick() { return Tick::instance()->tick(); }
 
+int tick() { return Tick::instance()->tick(); }
 
 //----------------------------------------------------------------------------------------------------
 
@@ -148,18 +149,23 @@ std::string get_localhost_ip()
   
   auto getip = [](const std::string &name) {
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0)  
-      { g_warning("socket(AF_INET, SOCK_DGRAM, 0) failed"); return std::string(); }
+    if (fd < 0) {
+      g_warning("socket(AF_INET, SOCK_DGRAM, 0) failed");
+      return std::string();
+    }
+    
     struct ifreq ifr;
     memset(ifr.ifr_name, 0x00, IFNAMSIZ);
     strncpy(ifr.ifr_name, name.c_str(), IFNAMSIZ);
-    char buf[32] = "";
+    
     if (ioctl(fd, SIOCGIFADDR, &ifr) != -1) {
+      char buf[32] = "";
       inet_ntop(AF_INET, &(((struct sockaddr_in*)(&ifr.ifr_addr))->sin_addr), buf, 32);
     } else {
       perror("ioctl");
       g_warning("ioctl(fd, SIOCGIFADDR, &ifr) failed");
-    }  
+    }
+    
     ::close(fd);
     return std::string(buf);
   };
@@ -186,13 +192,16 @@ std::vector<std::string> get_localhost_iplist()
   if (gethostname(host_name, sizeof(host_name)) == -1) { 
     perror("gethostname"); return v;
   }
+  
   struct hostent *phe = gethostbyname(host_name);
   if (phe == 0) { printf("gethostbyname failed"); return v; }
+  
   for (int i = 0; phe->h_addr_list[i] != 0; ++i) {
     struct in_addr addr;
     memcpy(&addr, phe->h_addr_list[i], sizeof(struct in_addr));
     v.push_back( inet_ntoa(addr) );
   }
+  
   return v;
 }
 //----------------------------------------------------------------------------------------------------

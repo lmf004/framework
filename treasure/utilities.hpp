@@ -99,7 +99,13 @@ struct Tick
 {
   static Tick * instance(){ static Tick t; return &t; }
   int tick() { return _tick; }
-  void run(std::shared_ptr<bool> running){ while(*running) { sleep(1); _tick++; less_dot("."); } }
+  void run(std::shared_ptr<bool> running){
+    while(*running) {
+      sleep(1);
+      _tick++;
+      less_dot(".");
+    }
+  }
 private:
   Tick() : _tick(0)  {}
   int _tick;
@@ -214,7 +220,8 @@ struct wait_event
       {
 	std::lock_guard<std::mutex> lock(_mtx);
 	if(evts.find(id) != evts.end() && evts[id].first) { 
-	  evts[id].first = false; return evts[id].second; 
+	  evts[id].first = false;
+	  return evts[id].second; 
 	}
       }
       usleep(100*1000);
@@ -229,7 +236,9 @@ struct wait_event
       {
 	std::lock_guard<std::mutex> lock(_mtx);
 	if(evts.find(id) != evts.end() && evts[id].first) { 
-	  evts[id].first = false; data = evts[id].second; return 0;
+	  evts[id].first = false;
+	  data = evts[id].second;
+	  return 0;
 	}
       }
       usleep(100*1000);
@@ -279,11 +288,17 @@ struct MinusTemp
 {
   MinusTemp(std::atomic<int> & count, int n = 1)
     : _count(count), _n(n), _commit(false)
-  { this->_count -= _n; }
-  ~MinusTemp() {
-    if(!_commit) this->_count += _n;
+  {
+    this->_count -= _n;
   }
+  
+  ~MinusTemp() {
+    if(!_commit)
+      this->_count += _n;
+  }
+  
   void commit() { _commit = true; }
+  
   std::atomic<int> & _count;
   int _n;
   bool _commit;
@@ -293,10 +308,15 @@ struct PlusTemp
 {
   PlusTemp(std::atomic<int> & count, int n = 1)
     : _count(count), _n(n), _commit(false)
-  { this->_count += _n; }
-  ~PlusTemp() {
-    if(!_commit) this->_count -= _n;
+  {
+    this->_count += _n;
   }
+  
+  ~PlusTemp() {
+    if(!_commit)
+      this->_count -= _n;
+  }
+  
   void commit() { _commit = true; }
   std::atomic<int> & _count;
   int _n;
@@ -308,32 +328,44 @@ struct timer
   typedef std::vector<std::pair<std::string, double> > times_type;
   typedef decltype(chrono::system_clock::now()) now_type ;
   timer(std::string name, times_type & v, bool delay = false)
-    : name(name), v(v) {
+    : name(name), v(v)
+  {
     if(!delay) do_start();
   }
-  ~timer() {
+  
+  ~timer()
+  {
     if(started && !stoped) do_stop();
   }
+  
   void start() {
     do_start();
   }
-  void stop() {
+  
+  void stop()
+  {
     if(started) {
       do_stop();
       stoped = true;
     }
   }
+  
 private:
-  void do_start() {
+  
+  void do_start()
+  {
     begin = chrono::system_clock::now();
     started = true;
   }
-  void do_stop() {
+  
+  void do_stop()
+  {
     auto end = chrono::system_clock::now();
     double seconds = double(chrono::duration_cast<chrono::microseconds>(end-begin).count())/(1000*1000);
     v.push_back(std::pair<std::string, double>(name, seconds));
     stoped = true;
   }
+  
   std::string name;
   now_type begin;
   bool started{false};
