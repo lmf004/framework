@@ -5,17 +5,33 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/param.h> 
 #include <time.h>
-#include <sys/time.h>
 #include <iconv.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/param.h> 
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <sys/epoll.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <arpa/inet.h>
+#include <net/if.h> 
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <functional>
 
 #include <glib.h>
 #include <gtk/gtk.h>
 
+#include "rawbuf.hpp"
 #include "socket_helper.hpp"
 
 int SocketHelper::send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown)
