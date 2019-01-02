@@ -136,7 +136,10 @@ int SocketHelper::recv_buffer(int sock, unsigned char* buffer, int buflen, gbool
       }
     }
     
-    if(cnt > 0)  { left -= cnt; total += cnt; }
+    if(cnt > 0)  {
+      left -= cnt;
+      total += cnt;
+    }
   }
   return total;
 }
@@ -156,32 +159,6 @@ void SocketHelper::set_non_blocking(int sock)
     perror("fcntl(sock,SETFL,opts)");
   }
 }
-
-int getpeermac(int sockfd, char *buf){ 
-  int ret =0; 
-  struct arpreq arpreq; 
-  struct sockaddr_in dstadd_in; 
-
-  socklen_t len = sizeof(struct sockaddr_in); 
-  memset(&arpreq, 0, sizeof(struct arpreq)); 
-  memset(&dstadd_in, 0, sizeof( struct sockaddr_in)); 
-
-  if(getpeername(sockfd, (struct sockaddr*)&dstadd_in, &len) < 0) 
-    perror("getpeername()"); 
-  else { 
-      memcpy( &arpreq.arp_pa, &dstadd_in, sizeof( struct sockaddr_in )); 
-      strcpy(arpreq.arp_dev, "eth0"); 
-      arpreq.arp_pa.sa_family = AF_INET; 
-      arpreq.arp_ha.sa_family = AF_UNSPEC; 
-      if(ioctl(sockfd, SIOCGARP, &arpreq) < 0) 
-	perror("ioctl SIOCGARP"); 
-      else { 
-	unsigned char* ptr = (unsigned char *)arpreq.arp_ha.sa_data; 
-	ret = sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5)); 
-      } 
-  } 
-  return ret; 
-} 
 
 int SocketHelper::accept(int sock)
 {
@@ -276,7 +253,7 @@ int SocketHelper::connect(const char * serverip, const int serverport)
   inet_aton(serverip, &servaddr.sin_addr);
   servaddr.sin_port = htons(serverport);
 
-  if(::bind(sock,(struct sockaddr*)&cliaddr,sizeof(cliaddr))<0) {
+  if(::bind(sock,(struct sockaddr*)&cliaddr,sizeof(cliaddr)) < 0) {
     ::perror("bind");
     ::close(sock);
     g_usleep(1*1000*1000);
@@ -398,4 +375,30 @@ void SocketHelper::epoll_loop(int port, int client_cnt, int& sock,
   }
   g_free(events);
 }
+
+int getpeermac(int sockfd, char *buf){ 
+  int ret =0; 
+  struct arpreq arpreq; 
+  struct sockaddr_in dstadd_in; 
+
+  socklen_t len = sizeof(struct sockaddr_in); 
+  memset(&arpreq, 0, sizeof(struct arpreq)); 
+  memset(&dstadd_in, 0, sizeof( struct sockaddr_in)); 
+
+  if(getpeername(sockfd, (struct sockaddr*)&dstadd_in, &len) < 0) 
+    perror("getpeername()"); 
+  else { 
+      memcpy( &arpreq.arp_pa, &dstadd_in, sizeof( struct sockaddr_in )); 
+      strcpy(arpreq.arp_dev, "eth0"); 
+      arpreq.arp_pa.sa_family = AF_INET; 
+      arpreq.arp_ha.sa_family = AF_UNSPEC; 
+      if(ioctl(sockfd, SIOCGARP, &arpreq) < 0) 
+	perror("ioctl SIOCGARP"); 
+      else { 
+	unsigned char* ptr = (unsigned char *)arpreq.arp_ha.sa_data; 
+	ret = sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5)); 
+      } 
+  } 
+  return ret; 
+} 
 

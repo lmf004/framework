@@ -8,13 +8,16 @@
 
 struct SocketHelper
 {
+  
   static int  send_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown);
   static int  recv_buffer(int sock, unsigned char* buffer, int buflen, gboolean * shutdown);
   static bool recv_msg(int sock, unsigned char* buffer, int buflen, gboolean * shutdown);
+  
   static void set_non_blocking(int sock);
   static int  accept(int sock);
   static int  listen(int port);
   static int  connect(const char * serverip, const int serverport);
+  
   static int  epoll_create(int sock, struct epoll_event** epoll_events, int client_cnt);
   static int  epoll_wait(int epfd, struct epoll_event* events, int client_cnt);
   static void epoll_add(int epfd, int connfd, void* ptr);
@@ -24,7 +27,7 @@ struct SocketHelper
 			 std::function<int(void*)> get_fd_handler,
 			 std::function<void(void*)> del_handler,
 			 std::shared_ptr<bool> running
-  );
+			 );
 
 };
 
