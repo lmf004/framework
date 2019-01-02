@@ -43,6 +43,7 @@ struct raw_buf
     g_warning("raw_buf's rvalue constructor should not be called!!!");
     // this funciton is for the following clone function to be compiled successfully;
   }
+  
   void expand(int len)
   {
     if(len <= _len)
